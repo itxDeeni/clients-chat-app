@@ -28,6 +28,10 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             while (socket.isConnected()) {
                 String messageToSend = scanner.nextLine();
+                if (messageToSend.equalsIgnoreCase("/exit")) {
+                    closeEverything(socket, bufferedReader, bufferedWriter);
+                    break;
+                }
                 bufferedWriter.write(username + ": " + messageToSend);
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
@@ -37,10 +41,7 @@ public class Client {
         }
     }
 
-    /*will broadcast messages from other users
-    * we will need to use a new thread(listening is a blocking operation)*/
     public void listenForMessage() {
-        // we will create a new thread and pass a runnable object
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -55,7 +56,6 @@ public class Client {
                     }
                 }
             }
-        //start the object we just created
         }).start();
     }
 
@@ -76,13 +76,28 @@ public class Client {
     }
 
     public static void main(String[] args) throws IOException {
-
         Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Enter server address (default is localhost): ");
+        String address = scanner.nextLine();
+        if (address.isEmpty()) {
+            address = "localhost";
+        }
+
+        System.out.println("Enter server port (default is 1234): ");
+        String portInput = scanner.nextLine();
+        int port;
+        if (portInput.isEmpty()) {
+            port = 1234;
+        } else {
+            port = Integer.parseInt(portInput);
+        }
+
         System.out.println("Enter your username for the group chat: ");
         String username = scanner.nextLine();
-        Socket socket = new Socket("localhost",1234);
+
+        Socket socket = new Socket(address, port);
         Client client = new Client(socket, username);
-        // program would get stuck here without running on separate threads
         client.listenForMessage();
         client.sendMessage();
     }

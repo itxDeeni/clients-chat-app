@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 // runnable: instances will be executed by a separate thread
@@ -34,6 +35,7 @@ public class ClientHandler implements Runnable{
             this.clientUsername = bufferedReader.readLine();
             // we want to add the client to the static arraylist and pass this as ClientHandler object
             clientHandlers.add(this);
+            Server.addChatMessage("SERVER: " + clientUsername + " has entered the chat!");
             broadcastMessage("SERVER: " + clientUsername + " has entered the chat!");
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
@@ -52,11 +54,23 @@ public class ClientHandler implements Runnable{
             try {
                 //listen for messages, halt until you receive a message
                 messageFromClient = bufferedReader.readLine();
-                broadcastMessage(messageFromClient);
+                if (messageFromClient != null) {
+                    Server.addChatMessage(clientUsername + ": " + messageFromClient);
+                    broadcastMessage(messageFromClient);
+                }
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
                 break;
             }
+        }
+    }
+
+    private void logMessage(String message) {
+        try (FileWriter fileWriter = new FileWriter("chatlog.txt", true);
+             PrintWriter printWriter = new PrintWriter(fileWriter)) {
+            printWriter.println(LocalDateTime.now() + " " + message);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -73,6 +87,7 @@ public class ClientHandler implements Runnable{
                 closeEverything(socket, bufferedReader, bufferedWriter);
             }
         }
+        logMessage(messageToSend);
     }
 
     public void removeClientHandler() {
@@ -95,5 +110,9 @@ public class ClientHandler implements Runnable{
         } catch (IOException e){
             e.printStackTrace();
         }
+    }
+
+    public String getClientUsername() {
+        return clientUsername;
     }
 }
